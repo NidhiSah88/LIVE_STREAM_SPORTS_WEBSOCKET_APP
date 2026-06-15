@@ -1,0 +1,83 @@
+// in console to check websocket is working :
+
+const socket =  new WebSocket('ws://localhost:8080');
+
+socket.onmessage = (event) => {
+    console.log('Message from server: ', event.data );
+}    
+
+socket.onopen = () => {
+    socket.send('Hello from the Chrome console');
+}
+
+sudo npm i -g wscat 
+
+// to check websockets in 
+
+sudo npm i -g wscat 
+
+wscat -c ws://localhost:8080
+
+ "scripts": {
+    "dev": "node --watch server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+
+Typess of websocket message : 
+ type base message 
+ topic based message 
+
+
+most webs use text (Json), and BigInt64Array(raw bytes)
+
+
+
+patterns to send messages -- BroadcastChannel(one to all), unicast(one to one), multicast(one  to many )
+
+
+
+pub / sub pattern 
+
+
+
+
+npm install express 
+
+neon db , drizzle, postgres 
+
+
+npm run db:generate
+
+
+npm install dotenv
+
+// #get your connection string from the Neon console
+// # Project -> Dashboard-> Connect 
+
+DATABASE_URL=postgresql://neondb_owner:npg_jICBt2UumY3f@ep-summer-forest-atfvw765-pooler.c-9.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+
+// psql 'postgresql://neondb_owner:npg_jICBt2UumY3f@ep-summer-forest-atfvw765-pooler.c-9.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
+
+npm install zod 
+
+node test_validation.js 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
