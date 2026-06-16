@@ -36,6 +36,28 @@ function broadcast(wss, payload ){
 // attach websocket logic to node server
 
 export function attachWebSocketServer(server){
+   // Protect websocket upgrade requests
+    server.on("upgrade", async (req, socket) => {
+        if (!wsArcjet) return;
+        
+            try{
+                const decision = await wsArcjet.protect(req);
+                if(decision.isDenied()){
+                    if(decision.reason.isRateLimit()){
+                        socket.write('HTTP/1.1 429 Too many request\r\n\r\n');
+                    } else {
+                        socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+                    }
+                    socket.destroy();
+                    return;
+                }
+            } catch(e){
+                console.error('WS upgrade protection error', e);
+                socket.write('HTTP/1.1 500 internal server error\r\n\r\n');
+                socket.destroy();
+                return;
+            }
+    });
     // create new websocket server
     const wss = new WebSocketServer({
         server, 

@@ -135,6 +135,8 @@ That avoids duplicating the same condition.
 
 
 ARCT JET :
+https://app.arcjet.com/sites/site_01kv7xmja9eyc8w3290vpgt71q/requests
+
 npm install @arcjet/node @arcjet/inspect 
  arcjet.com
 
@@ -306,5 +308,13 @@ That confirms:
 Express works ✅
 WebSocket connects ✅
 Broadcast works ✅
+
+
+UPGRADE WebSocket:
+test in browser : 
+const ws = new WebSocket("ws://localhost:8080/ws");
+
+ws.onmessage = console.log;
+
 
 
