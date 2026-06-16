@@ -62,7 +62,7 @@ npm install zod
 
 node test_validation.js 
 
-
+npm install zod
 
 
 

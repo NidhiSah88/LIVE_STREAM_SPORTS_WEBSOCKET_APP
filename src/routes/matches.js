@@ -1,24 +1,65 @@
-import express from 'express';
 import { Router } from "express";
+import { createMatchSchema, listMatchesQuerySchema } from "../validation/matches.js";
+import { db } from "../db/db.js";
+import { matches } from "../db/schema.js";
+import { getMatchStatus } from "../utils/match-status.js";
 
 
 export const matchRouter = Router();
+const MAX_LIMIT = 100;
 
-matchRouter.get('/', (req,res)=>{
-    res.status(200).json({message: "Matches List"});
+matchRouter.get('/', async (req,res)=>{
+    // res.status(200).json({message: "Matches List"});
+    const parsedData = listMatchesQuerySchema.safeParse(req.query);
+    console.log("parsedData: ", parsedData);
+    
+    if(!parsedData.success){
+        return res.status(404).json({error: "Invalid Query.", details: JSON.stringify(parsedData.error ) });
+    }
+
+    const limit = Math.min(parsedData.data.limit ?? 50, MAX_LIMIT );
+
+    try{
+        const data = await db.select()
+                             .from(matches)
+                             .orderBy(desc(matches.createdAt))
+                             .limit(limit);
+
+        res.json({data });
+
+    } catch(e){
+        res.status(500).json({ error: "Failed to list matches."})
+    }
+
 
 })
 
 matchRouter.post('/', async (req,res)=>{
+
+
     const parsed = createMatchSchema.safeParse(req.body);
-    const { data: { startTime, endTime, homeScore, awayScore }} = parsed ;
+    // const { data: { startTime, endTime, homeScore, awayScore }} = parsed ;
     
     if(!parsed.success){
         return res.status(404).json({error: "Invalid payload.", details: JSON.stringify(parsed.error ) });
     }
 
+    
+     // Only access data AFTER validation
+    const {
+        startTime,
+        endTime,
+        homeScore,
+        awayScore,
+    } = parsed.data;
+
+    console.log("LOGGG:: ", {
+                    status: getMatchStatus(startTime, endTime),
+                        payload: parsed.data,
+            });
+
     try{
-        const [event] = await DbNull.insert(matches).values({
+        const [event] = await db.insert(matches).values({
             ...parsed.data,
             startTime: new Date(startTime),
             endTime: new Date(endTime),
@@ -30,17 +71,18 @@ matchRouter.post('/', async (req,res)=>{
         res.status(201).json({data:event });
 
     } catch(e){
-        res.status(500).json({ error: 'Failed to create match. ', details: JSON.stringify(parsed) });
+        res.status(500).json({ error: 'Failed to create match. ',
+            //  details: JSON.stringify(parsed) 
+            details: e.message,
+              cause: e.cause,
+
+
+            
+        });
 
     }
 
-
-
-
-
-
-
-})
+});
 
 
 
