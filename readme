@@ -134,8 +134,177 @@ if (socket.readyState !== WebSocket.OPEN) return;
 That avoids duplicating the same condition.
 
 
+ARCT JET :
+npm install @arcjet/node @arcjet/inspect 
+ arcjet.com
+
+Arcjet | HTTP Burst Test (Spam Test):
+
+for i in {1..60}; do curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/matches; done
 
 
 
+
+
+
+Arcjet | WebSocket Burst Test (Connection/Handshake Test):
+
+open in browser: http://localhost:8080/
+
+then add this code in console.
+
+for (let i = 0; i < 10; i++) {
+  const ws = new WebSocket("ws://localhost:8000/ws");
+  ws.onopen = () => console.log(`Socket ${i} opened`);
+  ws.onclose = (e) => console.log(`Socket ${i} closed: ${e.code} ${e.reason}`);
+}
+OUTPUT:
+for (let i = 0; i < 10; i++) {
+  const ws = new WebSocket("ws://localhost:8080/ws");
+  ws.onopen = () => console.log(`Socket ${i} opened`);
+  ws.onclose = (e) => console.log(`Socket ${i} closed: ${e.code} ${e.reason}`);
+}
+
+(e) => console.log(`Socket ${i} closed: ${e.code} ${e.reason}`)
+VM61:3 Socket 0 opened
+VM61:3 Socket 1 opened
+VM61:3 Socket 2 opened
+VM61:3 Socket 3 opened
+VM61:3 Socket 4 opened
+VM61:3 Socket 5 opened
+VM61:3 Socket 6 opened
+VM61:3 Socket 8 opened
+VM61:3 Socket 7 opened
+VM61:3 Socket 9 opened
+VM61:4 Socket 5 closed: 1013 Rate limit exceeded
+VM61:4 Socket 8 closed: 1013 Rate limit exceeded
+VM61:4 Socket 4 closed: 1013 Rate limit exceeded
+VM61:4 Socket 7 closed: 1013 Rate limit exceeded
+VM61:4 Socket 9 closed: 1013 Rate limit exceeded
+
+
+or PASTE THIS IN CONSOLE. 
+const ws = new WebSocket("ws://localhost:8080/ws");
+
+ws.onopen = () => {
+  console.log("CONNECTED");
+};
+
+ws.onmessage = (event) => {
+  console.log("MESSAGE:", event.data);
+};
+
+ws.onclose = (event) => {
+  console.log(
+    "CLOSED",
+    event.code,
+    event.reason
+  );
+};
+
+ws.onerror = (err) => {
+  console.log("ERROR", err);
+};
+
+OUTPUT :
+CONNECTED
+VM76:8 MESSAGE: {"type":"welcome"}
+
+
+
+
+
+wscat -c ws://localhost:8080/ws
+
+1. Start your server
+
+Terminal:
+
+npm run dev
+
+Expected:
+
+Server is running on http://localhost:8080
+Websocket Server is running on ws://localhost:8080/ws
+2. Open the browser
+
+Go to:
+
+http://localhost:8080
+
+You should see:
+
+Hello from express server
+
+Do not open:
+
+http://localhost:8080/ws
+
+That endpoint is not a webpage.
+
+3. Open Developer Tools
+
+Chrome:
+
+Right click → Inspect → Console
+4. Connect to WebSocket
+
+Paste this in Console:
+
+const ws = new WebSocket("ws://localhost:8080/ws");
+
+ws.onopen = () => {
+  console.log("CONNECTED");
+};
+
+ws.onmessage = (event) => {
+  console.log("MESSAGE:", event.data);
+};
+
+ws.onclose = (event) => {
+  console.log(
+    "CLOSED",
+    event.code,
+    event.reason
+  );
+};
+
+ws.onerror = (err) => {
+  console.log("ERROR", err);
+};
+
+Expected:
+
+CONNECTED
+MESSAGE: {"type":"welcome"}
+5. Trigger a broadcast
+
+Open Thunder Client and send:
+
+POST http://localhost:8080/matches
+
+Body:
+
+{
+  "sport": "football",
+  "homeTeam": "Manchester City",
+  "awayTeam": "JSM United",
+  "startTime": "2026-06-16T09:00:00.000Z",
+  "endTime": "2026-06-16T11:00:00.000Z"
+}
+
+Browser console should receive:
+
+MESSAGE:
+{
+  "type":"match_created",
+  "data": { ... }
+}
+
+That confirms:
+
+Express works ✅
+WebSocket connects ✅
+Broadcast works ✅
 
 
