@@ -64,16 +64,74 @@ node test_validation.js
 
 npm install zod
 
+npm install ws  -- websocket
+sudo npm i -g wscat 
+
+wscat -c ws://localhost:8080/ws 
 
 
 
+Example:
 
+Assume 3 clients:
 
+Client A → OPEN
+Client B → CLOSED
+Client C → OPEN
 
+Loop execution:
 
+A → message sent ✅
+B → return ❌
+C → never reached
 
+Result:
 
+Only first client receives message.
 
+Using continue:
+
+function broadcast(wss, payload) {
+    for (const client of wss.clients) {
+
+        if (client.readyState !== WebSocket.OPEN)
+            continue;
+
+        client.send(JSON.stringify(payload));
+    }
+}
+
+Execution:
+
+A → send ✅
+B → skip ⏭️
+C → send ✅
+
+Result:
+
+All open clients receive messages.
+
+Difference:
+
+return   → stop entire function
+continue → skip current iteration only
+break    → stop loop but remain inside function
+
+For WebSocket broadcasting, continue is usually the correct choice because one disconnected client should not block everyone else.
+
+You could also reuse your helper and make it cleaner:
+
+function broadcast(wss, payload) {
+    for (const client of wss.clients) {
+        sendJson(client, payload);
+    }
+}
+
+because sendJson() already checks:
+
+if (socket.readyState !== WebSocket.OPEN) return;
+
+That avoids duplicating the same condition.
 
 
 

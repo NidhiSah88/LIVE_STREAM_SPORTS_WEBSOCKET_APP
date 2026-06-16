@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { desc } from "drizzle-orm";
 import { createMatchSchema, listMatchesQuerySchema } from "../validation/matches.js";
 import { db } from "../db/db.js";
 import { matches } from "../db/schema.js";
@@ -28,7 +29,10 @@ matchRouter.get('/', async (req,res)=>{
         res.json({data });
 
     } catch(e){
-        res.status(500).json({ error: "Failed to list matches."})
+        res.status(500).json({ 
+            error: "Failed to list matches.", 
+            details: e.message,
+        });
     }
 
 
@@ -67,6 +71,14 @@ matchRouter.post('/', async (req,res)=>{
             awayScore: awayScore ?? 0,
             status: getMatchStatus(startTime, endTime),
         }).returning();
+
+        // trigger the broadcast whenever match is created 
+        if(res.app.locals.broadcastMatchCreated){
+            console.log("before broadcast");
+            // push all matched data to all the connected fans immediately 
+            res.app.locals.broadcastMatchCreated(event)
+            console.log("after broadcast");
+        }
 
         res.status(201).json({data:event });
 
