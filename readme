@@ -847,11 +847,51 @@ readyState: 1
 Sending: {"type":"commentary","data":{"id":21,"matchId":1,"minute":32,"sequence":120,"period":"1st half","eventType":"MATCH","actor":"Nidhi Morgan","team":"FAC huwai","message":"Goal! Powerful finish from the edge of the body","metadata":{"asssist":"Nk kerr "},"tags":["goal","shot"],"createdAt":"2026-06-18T10:56:51.229Z"}}
 
 
+APM APPLICATIOM PERFORMANCE MONITORING 
+
+npm i apminsight --save 
+
+
+it helps us in :
+1 PERFORMANCE issues
+2. runtime delays 
+3. resources usage 
+4. event loop delays 
+
+
+for license key go to : https://www.site24x7.com/
+for api key : admin-> developer-> device key
+https://www.site24x7.in/app/client#/admin/developer/device-key
 
 
 
 
 
+SENDING 1000 LIVE EVNETS TO THE SYSTEM: 
+after adding seed.js, data.json , updating package.json run :
+
+npm run seed 
+
+open slit terminal, run :
+
+wscat -c ws://localhost:8080/ws 
+ in both terminal 
+
+ then in one terminal run:  {"type":"subscribe","matchId":1}
+
+then in browser open three browser localhst : 8080, open console  run wbfana, wbfanb, luker, code  , 
 
 
+then run : npm run seed 
+
+check browser console.. to test 1000000 live match broadcast .
+
+
+
+
+npm install cors
+
+
+
+KIT FROM JS MASTERY : https://jsmastery.com/video-kit/7970240e-e26d-42e0-ba87-a50eb4f0748d
 
