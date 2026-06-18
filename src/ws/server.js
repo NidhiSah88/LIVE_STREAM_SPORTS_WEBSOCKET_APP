@@ -1,6 +1,106 @@
 
 import { WebSocket, WebSocketServer} from 'ws';
 import { wsArcjet } from "../arcjet.js";
+
+// we can track wich sockets to subscribe to which matches 
+// using map because it automatically prevents a suer from being added twice 
+// to the same  match , that difference between map and array 
+
+const matchSubscribers = new Map();
+
+function subscribe(matchId, socket){
+    if(!matchSubscribers.has(matchId)){
+        matchSubscribers.set(matchId, new Set());
+    }
+    matchSubscribers.get(matchId).add(socket);
+}
+
+function unsubscribe(matchId, socket){
+    const subscribers = matchSubscribers.get(matchId);
+    if(!subscribers) return;
+    subscribers.delete(socket);
+    if(subscribers.size === 0){
+        matchSubscribers.delete(matchId);
+    }
+}
+
+function cleanupSubscription(socket){
+    for(const matchId of socket.subscriptions){
+        unsubscribe(matchId, socket);
+    }
+}
+
+
+// send data to interested people 
+function broadcastToMatch(matchId, payload){
+    const subscribers = matchSubscribers.get(matchId);
+    if(!subscribers || subscribers.size === 0) return;
+ console.log(
+    "Subscribers:",
+    subscribers?.size
+);
+
+    const message = JSON.stringify(payload);
+
+    for(const client of subscribers){
+        console.log(
+            "readyState:",
+            client.readyState
+        );
+
+
+        if(client.readyState === WebSocket.OPEN){
+            console.log(
+                "Sending:",
+                message
+            );
+
+            
+            client.send(message);
+
+        }
+    }
+}
+
+// handle socket 
+
+function handleSocketMessage(socket, data){
+    let message;
+
+    try{
+        message = JSON.parse(data.toString());
+        console.log("Incoming WS:", message);
+
+    } catch(e){
+        sendJson(socket, { type: 'error', message: 'Invalid JSON'});  
+        return;      
+    }
+
+    if(message?.type === "subscribe" && Number.isInteger(message.matchId)){
+        
+                const matchId = Number(message.matchId);
+
+        console.log(
+            "SUBSCRIBE →",
+            matchId
+        );
+
+
+        // subscribe the user 
+        subscribe(message.matchId, socket);
+        socket.subscriptions.add(message.matchId);
+        sendJson(socket, { type: 'subscribed', matchId: message.matchId });
+        return;
+    }
+
+    if(message?.type === "unsubscribe" && Number.isInteger(message.matchId)){
+        unsubscribe(message.matchId, socket);
+        socket.subscriptions.delete(message.matchId);
+        sendJson(socket, { type: 'unsubscribed', matchId: message.matchId });
+    }
+
+}
+
 // ensure socket open before server 
 
 // send payload to one socket
@@ -14,7 +114,7 @@ function sendJson(socket, payload ){
 
 
 // broadcast to all connected clients
-function broadcast(wss, payload ){
+function broadcastToAll(wss, payload ){
     // this loops consider all active connections
     for (const client of wss.clients){
         // if(client.readyState !== WebSocket.OPEN ) return;
@@ -88,8 +188,24 @@ export function attachWebSocketServer(server){
         socket.isAlive = true; 
         socket.on('pong', ()=>{ socket.isAlive= true; });
 
+        // attach socket to set to remember what subscribe to 
+        socket.subscriptions = new Set();
 
         sendJson(socket, { type: 'welcome'});
+
+        socket.on('message', (data) => {
+            handleSocketMessage(socket,data);
+        });
+
+        socket.on('error', () => {
+            socket.terminate();
+        });
+
+        socket.on('close', () => {
+            cleanupSubscription(socket);
+        });
+
+
         socket.on('error', console.error);
 
         socket.on("close", () => {
@@ -101,13 +217,27 @@ export function attachWebSocketServer(server){
     function broadcastMatchCreated(match){
         // it will take the match and broadcast to the entore web server 
         // broadcastMatchCreated(wss, { type: 'match_created', data: match });
-        broadcast(wss, {
+        broadcastToAll(wss, {
             type: "match_created",
             data: match,
         });
     }
+
+    function broadcastCommentary(matchId, comment) {
+          console.log(
+                "Broadcasting commentary",
+                matchId
+            );
+
+
+        broadcastToMatch(matchId, {
+            type: "commentary",
+            data: comment,
+        });
+    }
     
-    return {broadcastMatchCreated}
+    return {broadcastMatchCreated, broadcastCommentary };
+
 }
 
 

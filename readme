@@ -317,4 +317,541 @@ const ws = new WebSocket("ws://localhost:8080/ws");
 ws.onmessage = console.log;
 
 
+wscat -c ws://localhost:8080/ws 
+ to test broadcast to all in terminal :
+
+ run : npm run dev in one terminal.
+
+ run : wscat -c ws://localhost:8080/ws  in other terminal 
+
+then type in 2nd terminal: {"type":"subscribe","matchId":1}
+
+then enter 
+
+then call post route of match 
+
+TEST: 
+split the terminal 
+run : 
+wscat -c ws://localhost:8080/ws  in both the terminal 
+
+paste  " {"type":"subscribe","matchId":1}  " in one the terminal 
+
+then hit route :  http://www.localhost:8080/matches/1/commentary
+
+RESPONSE :  you will see in one terminal it braodcast new event through our tunnel directly to our second client 
+with a type of commentary and all the data so we can immediately displayed on 
+browser if this is a web app 
+while in other it doonot broadcast 
+
+
+
+in terminal i see :
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+REQ PARAMS [Object: null prototype] { id: '1' }
+Broadcast exists true
+Broadcasting commentary 1
+Subscribers: 1
+readyState: 1
+Sending: {"type":"commentary","data":{"id":19,"matchId":1,"minute":32,"sequence":120,"period":"1st half","eventType":"MATCH","actor":"Nidhi Morgan","team":"FAC huwai","message":"Goal! Powerful finish from the edge of the body","metadata":{"asssist":"Nk kerr "},"tags":["goal","shot"],"createdAt":"2026-06-18T10:48:55.673Z"}}
+
+
+
+
+(base) nidhikumari@Nidhis-MacBook-Pro WEBSOCKETSPORTSAPP_JSMASTERY % wscat -c ws://localhost:8080/ws
+Connected (press CTRL+C to quit)
+< {"type":"welcome"}
+> {"type":"subscribe","matchId":1}  
+< {"type":"subscribed","matchId":1}
+< {"type":"commentary","data":{"id":19,"matchId":1,"minute":32,"sequence":120,"period":"1st half","eventType":"MATCH","actor":"Nidhi Morgan","team":"FAC huwai","message":"Goal! Powerful finish from the edge of the body","metadata":{"asssist":"Nk kerr "},"tags":["goal","shot"],"createdAt":"2026-06-18T10:48:55.673Z"}}
+> 
+
+
+
+
+in browsers i see :
+
+window.fanA =
+new WebSocket(
+"ws://localhost:8080/ws"
+);
+
+fanA.onopen=()=>{
+console.log("OPEN");
+
+fanA.send(
+JSON.stringify({
+type:"subscribe",
+matchId:1
+})
+);
+};
+
+fanA.onmessage=(e)=>{
+console.log(
+"RECEIVED",
+e.data
+);
+};
+
+fanA.onerror=
+console.log;
+
+fanA.onclose=
+console.log;
+ƒ log() { [native code] }
+VM160:7 OPEN
+VM160:18 RECEIVED {"type":"welcome"}
+fanA.readyState
+1
+
+ in other terminal i see: 
+
+ (base) nidhikumari@Nidhis-MacBook-Pro WEBSOCKETSPORTSAPP_JSMASTERY % wscat -c ws://localhost:8080/ws
+Connected (press CTRL+C to quit)
+< {"type":"welcome"}
+> 
+
+
+FOR TEST IN ONE CONSOLE ADD: 
+window.fanA =
+new WebSocket(
+"ws://localhost:8080/ws"
+);
+
+fanA.onmessage = (e) => {
+  const msg =
+    JSON.parse(e.data);
+
+  console.log(
+    "RECEIVED:",
+    msg
+  );
+
+  // subscribe AFTER welcome
+  if (
+    msg.type ===
+    "welcome"
+  ) {
+    fanA.send(
+      JSON.stringify({
+        type:
+          "subscribe",
+        matchId: 1,
+      })
+    );
+
+    console.log(
+      "SUBSCRIBE SENT"
+    );
+  }
+};
+
+fanA.onopen =
+() =>
+console.log(
+"OPEN"
+);
+
+fanA.onclose =
+console.log;
+
+fanA.onerror =
+console.log;
+ƒ log() { [native code] }
+VM179:36 OPEN
+VM179:10 RECEIVED: {type: 'welcome'}
+VM179:28 SUBSCRIBE SENT
+VM179:10 RECEIVED: {type: 'subscribed', matchId: 1}matchId: 1type: "subscribed"[[Prototype]]: Object
+VM179:10 RECEIVED: {type: 'commentary', data: {…}}data: {id: 20, matchId: 1, minute: 32, sequence: 120, period: '1st half', …}type: "commentary"[[Prototype]]: Object
+
+
+////////
+
+
+what to add in browser console 2 and 3, so that i can test i get broad cast message in 1 , not in 2 or 3
+
+Now your WebSocket subscription flow is working correctly 🎉
+
+Open 3 separate browser windows/tabs → open DevTools → Console.
+
+Browser Console 1 → Subscribe to Match 1 (should receive commentary)
+window.fan1 =
+new WebSocket(
+"ws://localhost:8080/ws"
+);
+
+fan1.onopen = () =>
+console.log("Fan1 OPEN");
+
+fan1.onmessage = (e) => {
+  const msg =
+    JSON.parse(e.data);
+
+  console.log(
+    "[FAN1]",
+    msg
+  );
+
+  if (
+    msg.type ===
+    "welcome"
+  ) {
+    fan1.send(
+      JSON.stringify({
+        type:
+          "subscribe",
+        matchId: 1
+      })
+    );
+
+    console.log(
+      "Fan1 subscribed → Match 1"
+    );
+  }
+};
+
+fan1.onclose =
+console.log;
+
+fan1.onerror =
+console.log;
+
+Expected:
+
+Fan1 OPEN
+[FAN1] {type:"welcome"}
+Fan1 subscribed → Match 1
+[FAN1] {type:"subscribed", matchId:1}
+Browser Console 2 → Subscribe to Match 2 (should NOT receive Match 1 commentary)
+window.fan2 =
+new WebSocket(
+"ws://localhost:8080/ws"
+);
+
+fan2.onopen = () =>
+console.log("Fan2 OPEN");
+
+fan2.onmessage = (e) => {
+  const msg =
+    JSON.parse(e.data);
+
+  console.log(
+    "[FAN2]",
+    msg
+  );
+
+  if (
+    msg.type ===
+    "welcome"
+  ) {
+    fan2.send(
+      JSON.stringify({
+        type:
+          "subscribe",
+        matchId: 2
+      })
+    );
+
+    console.log(
+      "Fan2 subscribed → Match 2"
+    );
+  }
+};
+
+fan2.onclose =
+console.log;
+
+fan2.onerror =
+console.log;
+
+Expected:
+
+Fan2 OPEN
+[FAN2] welcome
+[FAN2] subscribed
+
+No commentary for Match 1.
+
+Browser Console 3 → Lurker (no subscription)
+window.lurker =
+new WebSocket(
+"ws://localhost:8080/ws"
+);
+
+lurker.onopen =
+() =>
+console.log(
+"Lurker OPEN"
+);
+
+lurker.onmessage =
+(e) =>
+console.log(
+"[LURKER]",
+JSON.parse(e.data)
+);
+
+lurker.onclose =
+console.log;
+
+lurker.onerror =
+console.log;
+
+Expected:
+
+Lurker OPEN
+[LURKER] {type:"welcome"}
+
+Nothing else.
+
+Now trigger commentary
+
+Send POST:
+
+POST http://localhost:8080/matches/1/commentary
+
+Body:
+
+{
+  "minute": 55,
+  "sequence": 333,
+  "period": "2nd half",
+  "eventType": "goal",
+  "actor": "Alex Morgan",
+  "team": "FC Neon",
+  "message": "Goal scored",
+  "metadata": {
+    "assist": "Sam Kerr"
+  },
+  "tags": ["goal"]
+}
+Expected result
+
+Browser 1:
+
+[FAN1]
+{
+ type:"commentary",
+ data:{ matchId:1 ... }
+}
+
+Browser 2:
+
+(no new message)
+
+Browser 3:
+
+(no new message)
+
+Then test isolation:
+
+Send:
+
+POST http://localhost:8080/matches/2/commentary
+
+Expected:
+
+Browser 1 → ❌ nothing
+Browser 2 → ✅ commentary
+Browser 3 → ❌ nothing
+
+If this works, your subscription filtering is preventing WebSocket data leakage correctly.
+
+
+OUT PUTT:   
+
+console1: 
+
+window.fanA =
+new WebSocket(
+"ws://localhost:8080/ws"
+);
+
+fanA.onmessage = (e) => {
+  const msg =
+    JSON.parse(e.data);
+
+  console.log(
+    "RECEIVED:",
+    msg
+  );
+
+  // subscribe AFTER welcome
+  if (
+    msg.type ===
+    "welcome"
+  ) {
+    fanA.send(
+      JSON.stringify({
+        type:
+          "subscribe",
+        matchId: 1,
+      })
+    );
+
+    console.log(
+      "SUBSCRIBE SENT"
+    );
+  }
+};
+
+fanA.onopen =
+() =>
+console.log(
+"OPEN"
+);
+
+fanA.onclose =
+console.log;
+
+fanA.onerror =
+console.log;
+ƒ log() { [native code] }
+VM181:36 OPEN
+VM181:10 RECEIVED: {type: 'welcome'}
+VM181:28 SUBSCRIBE SENT
+VM181:10 RECEIVED: {type: 'subscribed', matchId: 1}
+VM179:10 RECEIVED: {type: 'commentary', data: {…}}
+VM181:10 RECEIVED: {type: 'commentary', data: {…}}
+
+
+
+console 2: 
+
+window.fan2 =
+new WebSocket(
+"ws://localhost:8080/ws"
+);
+
+fan2.onopen = () =>
+console.log("Fan2 OPEN");
+
+fan2.onmessage = (e) => {
+  const msg =
+    JSON.parse(e.data);
+
+  console.log(
+    "[FAN2]",
+    msg
+  );
+
+  if (
+    msg.type ===
+    "welcome"
+  ) {
+    fan2.send(
+      JSON.stringify({
+        type:
+          "subscribe",
+        matchId: 2
+      })
+    );
+
+    console.log(
+      "Fan2 subscribed → Match 2"
+    );
+  }
+};
+
+fan2.onclose =
+console.log;
+
+fan2.onerror =
+console.log;
+ƒ log() { [native code] }
+VM75:7 Fan2 OPEN
+VM75:13 [FAN2] {type: 'welcome'}
+VM75:30 Fan2 subscribed → Match 2
+VM75:13 [FAN2] {type: 'subscribed', matchId: 2}matchId: 2type: "subscribed"[[Prototype]]: Object
+
+
+console 3: 
+window.lurker =
+new WebSocket(
+"ws://localhost:8080/ws"
+);
+
+lurker.onopen =
+() =>
+console.log(
+"Lurker OPEN"
+);
+
+lurker.onmessage =
+(e) =>
+console.log(
+"[LURKER]",
+JSON.parse(e.data)
+);
+
+lurker.onclose =
+console.log;
+
+lurker.onerror =
+console.log;
+ƒ log() { [native code] }
+VM149:8 Lurker OPEN
+VM149:14 [LURKER] {type: 'welcome'}
+
+
+in terminal: 
+< {"type":"commentary","data":{"id":21,"matchId":1,"minute":32,"sequence":120,"period":"1st half","eventType":"MATCH","actor":"Nidhi Morgan","team":"FAC huwai","message":"Goal! Powerful finish from the edge of the body","metadata":{"asssist":"Nk kerr "},"tags":["goal","shot"],"createdAt":"2026-06-18T10:56:51.229Z"}}
+
+
+in terminal: 
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+REQ PARAMS [Object: null prototype] { id: '1' }
+Broadcast exists true
+Broadcasting commentary 1
+Subscribers: 1
+readyState: 1
+Sending: {"type":"commentary","data":{"id":19,"matchId":1,"minute":32,"sequence":120,"period":"1st half","eventType":"MATCH","actor":"Nidhi Morgan","team":"FAC huwai","message":"Goal! Powerful finish from the edge of the body","metadata":{"asssist":"Nk kerr "},"tags":["goal","shot"],"createdAt":"2026-06-18T10:48:55.673Z"}}
+WebSocket connected
+Incoming WS: { type: 'subscribe', matchId: 1 }
+SUBSCRIBE → 1
+REQ PARAMS [Object: null prototype] { id: '1' }
+Broadcast exists true
+Broadcasting commentary 1
+Subscribers: 2
+readyState: 1
+Sending: {"type":"commentary","data":{"id":20,"matchId":1,"minute":32,"sequence":120,"period":"1st half","eventType":"MATCH","actor":"Nidhi Morgan","team":"FAC huwai","message":"Goal! Powerful finish from the edge of the body","metadata":{"asssist":"Nk kerr "},"tags":["goal","shot"],"createdAt":"2026-06-18T10:53:25.045Z"}}
+readyState: 1
+Sending: {"type":"commentary","data":{"id":20,"matchId":1,"minute":32,"sequence":120,"period":"1st half","eventType":"MATCH","actor":"Nidhi Morgan","team":"FAC huwai","message":"Goal! Powerful finish from the edge of the body","metadata":{"asssist":"Nk kerr "},"tags":["goal","shot"],"createdAt":"2026-06-18T10:53:25.045Z"}}
+WebSocket connected
+Incoming WS: { type: 'subscribe', matchId: 2 }
+SUBSCRIBE → 2
+WebSocket connected
+WebSocket connected
+Incoming WS: { type: 'subscribe', matchId: 1 }
+SUBSCRIBE → 1
+REQ PARAMS [Object: null prototype] { id: '1' }
+Broadcast exists true
+Broadcasting commentary 1
+Subscribers: 3
+readyState: 1
+Sending: {"type":"commentary","data":{"id":21,"matchId":1,"minute":32,"sequence":120,"period":"1st half","eventType":"MATCH","actor":"Nidhi Morgan","team":"FAC huwai","message":"Goal! Powerful finish from the edge of the body","metadata":{"asssist":"Nk kerr "},"tags":["goal","shot"],"createdAt":"2026-06-18T10:56:51.229Z"}}
+readyState: 1
+Sending: {"type":"commentary","data":{"id":21,"matchId":1,"minute":32,"sequence":120,"period":"1st half","eventType":"MATCH","actor":"Nidhi Morgan","team":"FAC huwai","message":"Goal! Powerful finish from the edge of the body","metadata":{"asssist":"Nk kerr "},"tags":["goal","shot"],"createdAt":"2026-06-18T10:56:51.229Z"}}
+readyState: 1
+Sending: {"type":"commentary","data":{"id":21,"matchId":1,"minute":32,"sequence":120,"period":"1st half","eventType":"MATCH","actor":"Nidhi Morgan","team":"FAC huwai","message":"Goal! Powerful finish from the edge of the body","metadata":{"asssist":"Nk kerr "},"tags":["goal","shot"],"createdAt":"2026-06-18T10:56:51.229Z"}}
+
+
+
+
+
+
+
+
+
 
