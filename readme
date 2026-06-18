@@ -1,3 +1,11 @@
+
+# ⚽ Live Sports App
+
+A real-time sports commentary platform that streams live match updates using WebSockets with a modern React dashboard.
+
+
+
+
 // in console to check websocket is working :
 
 const socket =  new WebSocket('ws://localhost:8080');
